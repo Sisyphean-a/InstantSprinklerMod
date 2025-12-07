@@ -151,7 +151,7 @@ public class ModEntry : Mod
                 // 播放动画
                 if (_config.EnableAnimation)
                 {
-                    PlayWaterAnimation(tile, location);
+                    PlayWaterAnimation(tile, sprinklerTile, location);
                 }
             }
         }
@@ -294,9 +294,45 @@ public class ModEntry : Mod
     /// <summary>
     /// 播放喷水动画
     /// </summary>
-    private void PlayWaterAnimation(Vector2 tile, GameLocation location)
+    private void PlayWaterAnimation(Vector2 tile, Vector2 sprinklerTile, GameLocation location)
     {
+        // 计算方向（从洒水器到地块）
+        Vector2 direction = tile - sprinklerTile;
+
+        // 根据方向计算旋转角度（弧度）
+        // Math.Atan2 返回从 X 轴到向量的角度
+        float rotation = (float)Math.Atan2(direction.Y, direction.X);
+
+        // 添加一点随机性，让动画更自然
+        Random random = new Random((int)(tile.X * 1000 + tile.Y));
+        float randomOffset = (float)(random.NextDouble() - 0.5) * 0.3f; // -0.15 到 0.15 弧度
+        rotation += randomOffset;
+
+        // 计算起始位置（从洒水器中心向地块方向偏移一点）
+        Vector2 sprinklerCenter = sprinklerTile * 64f + new Vector2(32f, 32f);
+        Vector2 targetCenter = tile * 64f + new Vector2(32f, 32f);
+        Vector2 startPosition = sprinklerCenter + (targetCenter - sprinklerCenter) * 0.3f;
+
         // 创建临时动画精灵
+        location.temporarySprites.Add(new TemporaryAnimatedSprite(
+            textureName: "TileSheets\\animations",
+            sourceRect: new Rectangle(0, 1984, 64, 64),
+            animationInterval: 80f,
+            animationLength: 4,
+            numberOfLoops: 1,
+            position: startPosition - new Vector2(32f, 32f), // 居中
+            flicker: false,
+            flipped: false,
+            layerDepth: (tile.Y * 64f + 32f) / 10000f,
+            alphaFade: 0.015f,
+            color: Color.White * 0.9f,
+            scale: 0.8f,
+            scaleChange: 0.02f,
+            rotation: rotation,
+            rotationChange: 0f
+        ));
+
+        // 添加一个小的水滴粒子效果
         location.temporarySprites.Add(new TemporaryAnimatedSprite(
             textureName: "TileSheets\\animations",
             sourceRect: new Rectangle(0, 1984, 64, 64),
@@ -306,10 +342,10 @@ public class ModEntry : Mod
             position: tile * 64f,
             flicker: false,
             flipped: false,
-            layerDepth: (tile.Y * 64f + 32f) / 10000f,
-            alphaFade: 0.01f,
-            color: Color.White,
-            scale: 1f,
+            layerDepth: (tile.Y * 64f + 33f) / 10000f,
+            alphaFade: 0.02f,
+            color: Color.LightBlue * 0.6f,
+            scale: 0.5f,
             scaleChange: 0f,
             rotation: 0f,
             rotationChange: 0f
