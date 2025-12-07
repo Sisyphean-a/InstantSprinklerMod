@@ -1,0 +1,23 @@
+{
+  "message.already-watered": "This sprinkler has already been used today.",
+  "message.not-enough-stamina": "Not enough stamina to use the sprinkler.",
+
+  "config.enable-animation.name": "Enable Animation",
+  "config.enable-animation.tooltip": "Show water spray animation when manually triggering sprinklers.",
+
+  "config.enable-sound.name": "Enable Sound",
+  "config.enable-sound.tooltip": "Play watering sound effect when manually triggering sprinklers.",
+
+  "config.require-stamina.name": "Require Stamina",
+  "config.require-stamina.tooltip": "Consume stamina when manually triggering sprinklers.",
+
+  "config.stamina-cost.name": "Stamina Cost",
+  "config.stamina-cost.tooltip": "Amount of stamina consumed per manual trigger.",
+
+  "config.once-per-day.name": "Once Per Day",
+  "config.once-per-day.tooltip": "Limit each sprinkler to be manually triggered only once per day.",
+
+  "config.debug-mode.name": "Debug Mode",
+  "config.debug-mode.tooltip": "Show debug messages in the SMAPI console."
+}
+

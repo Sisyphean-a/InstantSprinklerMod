@@ -1,0 +1,9 @@
+{
+  "EnableAnimation": true,
+  "EnableSound": true,
+  "RequireStamina": false,
+  "StaminaCost": 2.0,
+  "OncePerDay": false,
+  "DebugMode": false
+}
+

@@ -1,0 +1,23 @@
+{
+  "message.already-watered": "这个洒水器今天已经使用过了。",
+  "message.not-enough-stamina": "体力不足，无法使用洒水器。",
+
+  "config.enable-animation.name": "启用动画",
+  "config.enable-animation.tooltip": "手动触发洒水器时显示喷水动画。",
+
+  "config.enable-sound.name": "启用音效",
+  "config.enable-sound.tooltip": "手动触发洒水器时播放浇水音效。",
+
+  "config.require-stamina.name": "需要体力",
+  "config.require-stamina.tooltip": "手动触发洒水器时消耗体力。",
+
+  "config.stamina-cost.name": "体力消耗",
+  "config.stamina-cost.tooltip": "每次手动触发消耗的体力值。",
+
+  "config.once-per-day.name": "每天一次",
+  "config.once-per-day.tooltip": "限制每个洒水器每天只能手动触发一次。",
+
+  "config.debug-mode.name": "调试模式",
+  "config.debug-mode.tooltip": "在 SMAPI 控制台显示调试信息。"
+}
+

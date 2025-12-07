@@ -1,0 +1,17 @@
+{
+  "Name": "Instant Sprinkler",
+  "Author": "Xavier Nico",
+  "Version": "1.0.0",
+  "Description": "Allows you to manually trigger sprinklers by clicking on them, instantly watering nearby crops without waiting for the next day.",
+  "UniqueID": "XavierNico.InstantSprinkler",
+  "EntryDll": "InstantSprinklerMod.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+      "UniqueID": "spacechase0.GenericModConfigMenu",
+      "IsRequired": false
+    }
+  ]
+}
+
