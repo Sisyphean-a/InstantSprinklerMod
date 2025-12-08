@@ -141,19 +141,22 @@ public class ModEntry : Mod
 
         int wateredCount = 0;
 
-        // 遍历覆盖范围并浇水
+        // --- 1. 遍历循环：只负责浇水，不再负责播动画 ---
         foreach (Vector2 tile in coverage)
         {
             if (WaterTile(tile, location))
             {
                 wateredCount++;
-
-                // 播放动画
-                if (_config.EnableAnimation)
-                {
-                    PlayWaterAnimation(tile, sprinklerTile, location);
-                }
             }
+        }
+
+        // --- 2. 新增逻辑：在循环结束后，统一播放一次原版动画 ---
+        // 只要配置开启，且确实是洒水器，就播放动画
+        // (你也可以加上 wateredCount > 0 的判断，只在真正浇了水时才播放，看你喜好)
+        if (_config.EnableAnimation)
+        {
+            // 调用我们上一轮写的那个“原版动画移植方法”
+            PlayVanillaSprinklerAnimation(sprinkler); 
         }
 
         // 播放音效
@@ -292,67 +295,6 @@ public class ModEntry : Mod
     }
 
     /// <summary>
-    /// 播放喷水动画
-    /// </summary>
-    private void PlayWaterAnimation(Vector2 tile, Vector2 sprinklerTile, GameLocation location)
-    {
-        // 计算方向（从洒水器到地块）
-        Vector2 direction = tile - sprinklerTile;
-
-        // 根据方向计算旋转角度（弧度）
-        // Math.Atan2 返回从 X 轴到向量的角度
-        float rotation = (float)Math.Atan2(direction.Y, direction.X);
-
-        // 添加一点随机性，让动画更自然
-        Random random = new Random((int)(tile.X * 1000 + tile.Y));
-        float randomOffset = (float)(random.NextDouble() - 0.5) * 0.3f; // -0.15 到 0.15 弧度
-        rotation += randomOffset;
-
-        // 计算起始位置（从洒水器中心向地块方向偏移一点）
-        Vector2 sprinklerCenter = sprinklerTile * 64f + new Vector2(32f, 32f);
-        Vector2 targetCenter = tile * 64f + new Vector2(32f, 32f);
-        Vector2 startPosition = sprinklerCenter + (targetCenter - sprinklerCenter) * 0.3f;
-
-        // 创建临时动画精灵
-        location.temporarySprites.Add(new TemporaryAnimatedSprite(
-            textureName: "TileSheets\\animations",
-            sourceRect: new Rectangle(0, 1984, 64, 64),
-            animationInterval: 80f,
-            animationLength: 4,
-            numberOfLoops: 1,
-            position: startPosition - new Vector2(32f, 32f), // 居中
-            flicker: false,
-            flipped: false,
-            layerDepth: (tile.Y * 64f + 32f) / 10000f,
-            alphaFade: 0.015f,
-            color: Color.White * 0.9f,
-            scale: 0.8f,
-            scaleChange: 0.02f,
-            rotation: rotation,
-            rotationChange: 0f
-        ));
-
-        // 添加一个小的水滴粒子效果
-        location.temporarySprites.Add(new TemporaryAnimatedSprite(
-            textureName: "TileSheets\\animations",
-            sourceRect: new Rectangle(0, 1984, 64, 64),
-            animationInterval: 100f,
-            animationLength: 4,
-            numberOfLoops: 1,
-            position: tile * 64f,
-            flicker: false,
-            flipped: false,
-            layerDepth: (tile.Y * 64f + 33f) / 10000f,
-            alphaFade: 0.02f,
-            color: Color.LightBlue * 0.6f,
-            scale: 0.5f,
-            scaleChange: 0f,
-            rotation: 0f,
-            rotationChange: 0f
-        ));
-    }
-
-    /// <summary>
     /// 设置 Generic Mod Config Menu
     /// </summary>
     private void SetupConfigMenu()
@@ -418,6 +360,84 @@ public class ModEntry : Mod
             getValue: () => _config.DebugMode,
             setValue: value => _config.DebugMode = value
         );
+    }
+
+    /// <summary>
+    /// 移植自星露谷原版 Object.cs 的 ApplySprinklerAnimation 方法
+    /// </summary>
+    private void PlayVanillaSprinklerAnimation(StardewValley.Object sprinkler)
+    {
+        if (sprinkler == null || sprinkler.Location == null) return;
+
+        GameLocation location = sprinkler.Location;
+        Vector2 tileLocation = sprinkler.TileLocation;
+        
+        // 获取洒水半径
+        int radius = sprinkler.GetModifiedRadiusForSprinkler();
+        
+        int tileX = (int)tileLocation.X;
+        int tileY = (int)tileLocation.Y;
+
+        if (radius != 0)
+        {
+            if (radius == 1) // 优质洒水器 (8格)
+            {
+                // 【修改点 1】 原来的 100 改成了 2
+                location.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\animations", new Microsoft.Xna.Framework.Rectangle(0, 1984, 192, 192), 60f, 3, 2, tileLocation * 64f + new Vector2(-64f, -64f), flicker: false, flipped: false)
+                {
+                    color = Color.White * 0.4f,
+                    delayBeforeAnimationStart = 0, // 随机延迟
+                    id = tileX * 4000 + tileY
+                });
+            }
+            else if (radius > 0) // 铱制洒水器或更大范围
+            {
+                float scale = (float)radius / 2f;
+                // 【修改点 2】 原来的 100 改成了 2
+                location.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\animations", new Microsoft.Xna.Framework.Rectangle(0, 2176, 320, 320), 60f, 4, 2, tileLocation * 64f + new Vector2(32f, 32f) + new Vector2(-160f, -160f) * scale, flicker: false, flipped: false)
+                {
+                    color = Color.White * 0.4f,
+                    delayBeforeAnimationStart = 0, // 去掉延迟
+                    id = tileX * 4000 + tileY,
+                    scale = scale
+                });
+            }
+        }
+        else // 普通洒水器 (4格，十字形)
+        {
+            // 对于普通洒水器，保留一点点随机延迟可能看起来更自然，或者也可以设为0
+            int delay = Game1.random.Next(200); // 改小一点，原来是1000
+            
+            // 【修改点 3】 下面四个 new TemporaryAnimatedSprite 的最后一个参数 100 都改成 1
+            
+            // 上
+            location.temporarySprites.Add(new TemporaryAnimatedSprite(29, tileLocation * 64f + new Vector2(0f, -48f), Color.White * 0.5f, 4, flipped: false, 60f, 2) // <--- 改这里
+            {
+                delayBeforeAnimationStart = delay,
+                id = tileX * 4000 + tileY
+            });
+            // 右
+            location.temporarySprites.Add(new TemporaryAnimatedSprite(29, tileLocation * 64f + new Vector2(48f, 0f), Color.White * 0.5f, 4, flipped: false, 60f, 2) // <--- 改这里
+            {
+                rotation = (float)Math.PI / 2f,
+                delayBeforeAnimationStart = delay,
+                id = tileX * 4000 + tileY
+            });
+            // 下
+            location.temporarySprites.Add(new TemporaryAnimatedSprite(29, tileLocation * 64f + new Vector2(0f, 48f), Color.White * 0.5f, 4, flipped: false, 60f, 2) // <--- 改这里
+            {
+                rotation = (float)Math.PI,
+                delayBeforeAnimationStart = delay,
+                id = tileX * 4000 + tileY
+            });
+            // 左
+            location.temporarySprites.Add(new TemporaryAnimatedSprite(29, tileLocation * 64f + new Vector2(-48f, 0f), Color.White * 0.5f, 4, flipped: false, 60f, 2) // <--- 改这里
+            {
+                rotation = 4.712389f,
+                delayBeforeAnimationStart = delay,
+                id = tileX * 4000 + tileY
+            });
+        }
     }
 }
 
