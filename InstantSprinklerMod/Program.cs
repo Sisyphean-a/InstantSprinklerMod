@@ -62,7 +62,22 @@ public class ModEntry : Mod
         // 过滤条件检查
         if (!Context.IsWorldReady) return;
         if (Game1.activeClickableMenu != null) return;
-        if (!e.Button.IsActionButton()) return;
+        // 检查按键是否符合触发条件
+        if (!IsValidInput(e.Button)) return;
+
+        // [兼容性优化] 工具冲突检测
+        // 如果玩家手持镐子(Pickaxe)或斧头(Axe)，说明意图可能是“移除/回收”洒水器
+        // 此时应跳过模组逻辑，允许原版工具生效。
+        // 此逻辑对所有平台启用，以防止误操作。
+        var tool = Game1.player.CurrentTool;
+        if (tool != null && (tool is StardewValley.Tools.Pickaxe or StardewValley.Tools.Axe))
+        {
+            if (_config.DebugMode) 
+            {
+                Monitor.Log($"Ignored trigger: Player is holding {tool.Name} (Type: {tool.GetType().Name}).", LogLevel.Debug);
+            }
+            return;
+        }
 
         // 获取点击的地块
         Vector2 tile = e.Cursor.GrabTile;
@@ -108,6 +123,22 @@ public class ModEntry : Mod
         {
             Monitor.Log($"Manually triggered sprinkler at {tile}", LogLevel.Debug);
         }
+    }
+    
+    /// <summary>
+    /// 检查输入按键是否有效
+    /// </summary>
+    private bool IsValidInput(SButton button)
+    {
+        // PC端：仅右键 (Action)
+        if (Constants.TargetPlatform != GamePlatform.Android)
+        {
+            return button.IsActionButton();
+        }
+
+        // 安卓端：允许右键 (Action) 或 左键/点击 (UseTool)
+        // 注意：安卓的触摸通常映射为 UseTool
+        return button.IsActionButton() || button.IsUseToolButton();
     }
 
     /// <summary>
